@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Memory Sequence</title>
+  <style>
+    /* -------------------------------------------------------------
+       1. GLOBAL RESET & FLEXIBLE MOBILE RESPONSIVE LAYOUT
+       ------------------------------------------------------------- */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --bg-gradient: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+      --text-color: #f9fafb;
+      --card-bg: rgba(31, 41, 55, 0.75);
+      --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      
+      /* Active Tile Color Variable */
+      --tile-color: #00e5ff;
+      --tile-glow: rgba(0, 229, 255, 0.85);
+    }
+
+    body {
+      font-family: var(--font-family);
+      background: var(--bg-gradient);
+      color: var(--text-color);
+      min-height: 100dvh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      transition: background 0.5s ease;
+    }
+
+    body.theme-dark { --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); --text-color: #f8fafc; }
+    body.theme-light { --bg-gradient: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); --text-color: #0f172a; }
+    body.theme-sunset { --bg-gradient: linear-gradient(135deg, #4c1d95 0%, #831843 100%); --text-color: #fdf2f8; }
+    body.theme-pastel { --bg-gradient: linear-gradient(135deg, #fbcfe8 0%, #bae6fd 100%); --text-color: #1e293b; }
+
+    .app-container {
+      width: 100%;
+      max-width: 460px;
+      height: 100dvh;
+      padding: env(safe-area-inset-top, 20px) 20px env(safe-area-inset-bottom, 20px) 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    /* -------------------------------------------------------------
+       2. BORDERLESS & CLEAN UI ELEMENTS
+       ------------------------------------------------------------- */
+    .screen {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+      animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      overflow: hidden;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.97); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .borderless-card {
+      background: transparent;
+      border: none;
+      padding: 0;
+      margin: auto 0;
+      text-align: center;
+      position: relative;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .banner-img {
+      width: 100%;
+      max-width: 320px;
+      max-height: 120px;
+      object-fit: contain;
+      margin-bottom: 24px;
+      border: none;
+      filter: drop-shadow(0 8px 16px rgba(0,0,0,0.25));
+    }
+
+    .top-stats-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      width: 100%;
+    }
+
+    .stat-chip {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 8px 16px;
+      border-radius: 24px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: inherit;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    /* Floating Coin Indicator Animation */
+    .coin-pop {
+      position: absolute;
+      font-weight: 800;
+      font-size: 1.4rem;
+      pointer-events: none;
+      z-index: 200;
+      animation: floatUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .coin-pop.plus { color: #10b981; text-shadow: 0 0 10px rgba(16, 185, 129, 0.6); }
+    .coin-pop.minus { color: #ef4444; text-shadow: 0 0 10px rgba(239, 68, 68, 0.6); }
+
+    @keyframes floatUp {
+      0% { opacity: 0; transform: translateY(0) scale(0.6); }
+      20% { opacity: 1; transform: translateY(-15px) scale(1.2); }
+      80% { opacity: 1; }
+      100% { opacity: 0; transform: translateY(-60px) scale(0.9); }
+    }
+
+    /* -------------------------------------------------------------
+       3. PROPORTIONAL & RESPONSIVE CIRCULAR BUTTON LAYOUT
+       ------------------------------------------------------------- */
+    .main-nav-circle-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      margin: 16px 0 28px 0;
+      width: 100%;
+    }
+
+    .circle-nav-btn {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease;
+      overflow: hidden;
+      border: none;
+      flex-shrink: 0;
+    }
+
+    .circle-nav-btn img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .circle-nav-btn:active {
+      transform: scale(0.88);
+    }
+
+    .play-btn-main {
+      width: 92px;
+      height: 92px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      overflow: hidden;
+      border: none;
+      flex-shrink: 0;
+    }
+
+    .play-btn-main img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .play-btn-main:active {
+      transform: scale(0.9);
+    }
+
+    /* Help Circle Button */
+    .bottom-help-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      overflow: hidden;
+      border: none;
+      margin-top: 10px;
+    }
+
+    .bottom-help-btn img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Standard Glass Button */
+    .btn {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(10px);
+      border: none;
+      color: inherit;
+      padding: 14px 18px;
+      border-radius: 20px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      outline: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .btn:active {
+      transform: scale(0.96);
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+    }
+
+    /* -------------------------------------------------------------
+       4. SCROLLABLE MODERN SETTINGS
+       ------------------------------------------------------------- */
+    .settings-container {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 4px;
+      margin-bottom: 16px;
+      text-align: left;
+    }
+
+    .settings-section-title {
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.6;
+      margin: 18px 0 10px 4px;
+    }
+
+    .setting-item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 14px 16px;
+      border-radius: 18px;
+      margin-bottom: 8px;
+    }
+
+    .setting-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .setting-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .setting-desc {
+      font-size: 0.75rem;
+      opacity: 0.6;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      width: 48px;
+      height: 26px;
+      display: inline-block;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(255, 255, 255, 0.2);
+      transition: .3s;
+      border-radius: 34px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .toggle-slider {
+      background-color: #10b981;
+    }
+
+    input:checked + .toggle-slider:before {
+      transform: translateX(22px);
+    }
+
+    .segmented-control {
+      display: flex;
+      background: rgba(0, 0, 0, 0.15);
+      padding: 4px;
+      border-radius: 16px;
+      gap: 4px;
+    }
+
+    .segmented-control button {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 8px 10px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border-radius: 12px;
+      color: inherit;
+      opacity: 0.7;
+      cursor: pointer;
+    }
+
+    .segmented-control button.active {
+      background: rgba(255, 255, 255, 0.2);
+      opacity: 1;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    /* -------------------------------------------------------------
+       5. SHOP & INVENTORY
+       ------------------------------------------------------------- */
+    .tab-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      background: rgba(0, 0, 0, 0.15);
+      padding: 4px;
+      border-radius: 16px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      border: none;
+      padding: 10px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      background: transparent;
+      color: inherit;
+      opacity: 0.6;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      background: rgba(255, 255, 255, 0.2);
+      opacity: 1;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      max-height: 320px;
+      overflow-y: auto;
+      padding: 4px;
+      margin-bottom: 14px;
+    }
+
+    .color-swatch {
+      aspect-ratio: 1;
+      border-radius: 16px;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    }
+
+    .color-swatch.active {
+      transform: scale(1.08);
+      box-shadow: 0 0 14px rgba(255, 255, 255, 0.6);
+      z-index: 2;
+    }
+
+    .color-price-tag {
+      position: absolute;
+      bottom: 3px;
+      font-size: 0.58rem;
+      background: rgba(0,0,0,0.55);
+      padding: 1px 5px;
+      border-radius: 8px;
+    }
+
+    .items-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 320px;
+      overflow-y: auto;
+      margin-bottom: 14px;
+    }
+
+    .shop-item-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 12px 16px;
+      border-radius: 18px;
+    }
+
+    /* -------------------------------------------------------------
+       6. GAMEPLAY GRID & HUD
+       ------------------------------------------------------------- */
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .progress-container {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 100%;
+      background: #10b981;
+      border-radius: 6px;
+      transform-origin: left;
+      transition: transform 0.1s linear;
+    }
+
+    .grid-wrapper {
+      width: 100%;
+      aspect-ratio: 1;
+      padding: 12px;
+      margin: auto 0;
+      position: relative;
+    }
+
+    .grid-container {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      gap: 12px;
+    }
+
+    .grid-3x3 { grid-template-columns: repeat(3, 1fr); }
+    .grid-4x4 { grid-template-columns: repeat(4, 1fr); }
+    .grid-5x5 { grid-template-columns: repeat(5, 1fr); }
+
+    .node {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(8px);
+      border-radius: 22px;
+      border: none;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.12s ease, background-color 0.12s ease, box-shadow 0.12s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .node:active {
+      transform: scale(0.92);
+    }
+
+    .node.active {
+      background-color: var(--tile-color) !important;
+      box-shadow: 0 0 32px var(--tile-glow), inset 0 0 12px rgba(255, 255, 255, 0.9) !important;
+      transform: scale(1.05) !important;
+      z-index: 10;
+    }
+
+    .node.fail-red {
+      background-color: #ef4444 !important;
+      box-shadow: 0 0 32px rgba(239, 68, 68, 0.9) !important;
+      animation: shake 0.4s ease-in-out;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-6px); }
+      40% { transform: translateX(6px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(4px); }
+    }
+
+    #effect-canvas {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .game-status-text {
+      text-align: center;
+      font-size: 1.05rem;
+      font-weight: 700;
+      min-height: 28px;
+      margin-top: 12px;
+    }
+
+    .in-game-powerups {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .powerup-btn {
+      background: rgba(255, 255, 255, 0.12);
+      border: none;
+      color: inherit;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    /* -------------------------------------------------------------
+       7. OVERLAYS & MODALS
+       ------------------------------------------------------------- */
+    .overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      z-index: 100;
+      animation: fadeIn 0.25s ease forwards;
+    }
+
+    .overlay.active { display: flex; }
+
+    .modal-card {
+      background: rgba(31, 41, 55, 0.9);
+      backdrop-filter: blur(16px);
+      border-radius: 28px;
+      padding: 24px;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+      box-shadow: var(--card-shadow);
+      border: none;
+    }
+
+    .difficulty-select-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 18px 0;
+    }
+
+    .diff-card-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      border: none;
+      color: inherit;
+      text-align: left;
+    }
+
+    .diff-card-btn:active {
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .social-links {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .social-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      font-size: 1.2rem;
+      color: inherit;
+    }
+  </style>
+</head>
+<body class="theme-dark">
+
+  <div class="app-container" id="app-root">
+
+    <!-- ==================== HOME SCREEN ==================== -->
+    <section id="screen-home" class="screen active">
+      <div class="borderless-card">
+        <!-- Banner Image (Custom Local Asset) -->
+        <img src="assets/banner.png" alt="Memory Sequence" class="banner-img" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'300\' height=\'90\' viewBox=\'0 0 300 90\'><rect width=\'100%\' height=\'100%\' rx=\'20\' fill=\'rgba(255,255,255,0.1)\'/><text x=\'50%\' y=\'55%\' font-family=\'sans-serif\' font-size=\'22\' font-weight=\'bold\' fill=\'%23f9fafb\' text-anchor=\'middle\'>Memory Sequence</text></svg>';" />
+
+        <div class="top-stats-row">
+          <div class="stat-chip">🪙 <span id="home-coins">0</span></div>
+          <div class="stat-chip">❤️ <span id="home-hearts">1</span></div>
+          <div class="stat-chip">💡 <span id="home-clues">0</span></div>
+        </div>
+
+        <!-- CIRCULAR BUTTON MENU (OPTION A ASSETS) -->
+        <div class="main-nav-circle-wrapper">
+          <!-- Settings Left -->
+          <div class="circle-nav-btn" onclick="app.showScreen('screen-settings')" title="Settings">
+            <img src="assets/btn-settings.png" alt="Settings" onerror="this.onerror=null; this.parentElement.innerText='⚙️';" />
+          </div>
+          
+          <!-- Center Play Button (Opens Difficulty Selection Modal) -->
+          <div class="play-btn-main" onclick="app.openDifficultyModal()" title="Play">
+            <img src="assets/btn-play.png" alt="Play" onerror="this.onerror=null; this.parentElement.innerHTML='<svg viewBox=\'0 0 24 24\' width=\'38\' height=\'38\' fill=\'white\'><path d=\'M8 5v14l11-7z\'/></svg>';" />
+          </div>
+
+          <!-- Inventory / Shop Right -->
+          <div class="circle-nav-btn" onclick="app.showScreen('screen-inventory')" title="Inventory & Shop">
+            <img src="assets/btn-inventory.png" alt="Inventory" onerror="this.onerror=null; this.parentElement.innerText='🎨';" />
+          </div>
+        </div>
+
+        <!-- Bottom Center Help Button -->
+        <div class="bottom-help-btn" onclick="app.openHelpModal()" title="How to Play & Info">
+          <img src="assets/btn-help.png" alt="Help" onerror="this.onerror=null; this.parentElement.innerText='❓';" />
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== MODE & DIFFICULTY SELECTION MODAL ==================== -->
+    <div id="overlay-difficulty" class="overlay">
+      <div class="modal-card">
+        <h2>Select Difficulty</h2>
+        <p style="font-size:0.85rem; opacity:0.7; margin-top:4px;">Choose your challenge level</p>
+
+        <div class="difficulty-select-list">
+          <div class="diff-card-btn" onclick="app.startGameWithDiff('easy')">
+            <div>
+              <strong style="color:#34d399;">Easy (3x3)</strong>
+              <div style="font-size:0.75rem; opacity:0.6;">Relaxed timer speed</div>
+            </div>
+            <div style="font-size:0.85rem; font-weight:700;">Best: <span id="diff-best-easy">0</span></div>
+          </div>
+
+          <div class="diff-card-btn" onclick="app.startGameWithDiff('medium')">
+            <div>
+              <strong style="color:#fbbf24;">Medium (4x4)</strong>
+              <div style="font-size:0.75rem; opacity:0.6;">Standard memory speed</div>
+            </div>
+            <div style="font-size:0.85rem; font-weight:700;">Best: <span id="diff-best-medium">0</span></div>
+          </div>
+
+          <div class="diff-card-btn" onclick="app.startGameWithDiff('hard')">
+            <div>
+              <strong style="color:#f87171;">Hard (5x5)</strong>
+              <div style="font-size:0.75rem; opacity:0.6;">Fast pace grid challenge</div>
+            </div>
+            <div style="font-size:0.85rem; font-weight:700;">Best: <span id="diff-best-hard">0</span></div>
+          </div>
+
+          <div class="diff-card-btn" style="background: rgba(236, 72, 153, 0.15);" onclick="app.startGameWithDiff('speed')">
+            <div>
+              <strong style="color:#f472b6;">⚡ Speed Mode (4x4)</strong>
+              <div style="font-size:0.75rem; opacity:0.7;">2x Coin Rewards & Rapid Timer</div>
+            </div>
+            <div style="font-size:0.85rem; font-weight:700;">Best: <span id="diff-best-speed">0</span></div>
+          </div>
+        </div>
+
+        <button class="btn btn-secondary" onclick="app.closeDifficultyModal()">Back to Menu</button>
+      </div>
+    </div>
+
+    <!-- ==================== INVENTORY & SHOP SCREEN ==================== -->
+    <section id="screen-inventory" class="screen">
+      <div class="borderless-card" style="height: 100%; justify-content: flex-start;">
+        <h2 style="margin-bottom: 6px;">Inventory & Shop</h2>
+        <div class="top-stats-row" style="margin-top: 4px; margin-bottom: 12px;">
+          <div class="stat-chip">🪙 <span id="shop-coins">0</span></div>
+          <div class="stat-chip">❤️ <span id="shop-hearts">0</span></div>
+          <div class="stat-chip">💡 <span id="shop-clues">0</span></div>
+        </div>
+
+        <div class="tab-bar" style="width: 100%;">
+          <button id="tab-btn-colors" class="tab-btn active" onclick="app.switchShopTab('colors')">50 Colors</button>
+          <button id="tab-btn-effects" class="tab-btn" onclick="app.switchShopTab('effects')">Effects</button>
+          <button id="tab-btn-items" class="tab-btn" onclick="app.switchShopTab('items')">Items</button>
+        </div>
+
+        <!-- Tab 1: 50 Colors -->
+        <div id="shop-tab-colors" style="width:100%;">
+          <div class="color-grid" id="color-grid-container">
+            <!-- 50 Color Swatches generated dynamically by JS -->
+          </div>
+        </div>
+
+        <!-- Tab 2: Click Visual Effects -->
+        <div id="shop-tab-effects" style="width:100%; display: none;">
+          <div class="items-list">
+            <div class="shop-item-card">
+              <div><strong>Default Pulse</strong><div style="font-size:0.75rem; opacity:0.6;">Clean highlight</div></div>
+              <button id="btn-effect-none" class="btn btn-secondary" style="width:auto; padding:6px 14px;" onclick="app.selectEffect('none')">Use</button>
+            </div>
+            <div class="shop-item-card">
+              <div><strong>🔥 Flame Burst</strong><div style="font-size:0.75rem; opacity:0.6;">Fiery particle tap</div></div>
+              <button id="btn-effect-flame" class="btn" style="width:auto; padding:6px 14px;" onclick="app.handleEffectClick('flame', 100)">100 🪙</button>
+            </div>
+            <div class="shop-item-card">
+              <div><strong>✨ Sparkle Burst</strong><div style="font-size:0.75rem; opacity:0.6;">Magic sparkles</div></div>
+              <button id="btn-effect-sparkle" class="btn" style="width:auto; padding:6px 14px;" onclick="app.handleEffectClick('sparkle', 150)">150 🪙</button>
+            </div>
+            <div class="shop-item-card">
+              <div><strong>🌀 Neon Vortex</strong><div style="font-size:0.75rem; opacity:0.6;">Swirling energy ring</div></div>
+              <button id="btn-effect-vortex" class="btn" style="width:auto; padding:6px 14px;" onclick="app.handleEffectClick('vortex', 220)">220 🪙</button>
+            </div>
+            <div class="shop-item-card">
+              <div><strong>🎉 Confetti Burst</strong><div style="font-size:0.75rem; opacity:0.6;">Festive party explosion</div></div>
+              <button id="btn-effect-confetti" class="btn" style="width:auto; padding:6px 14px;" onclick="app.handleEffectClick('confetti', 300)">300 🪙</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Power-ups & Items -->
+        <div id="shop-tab-items" style="width:100%; display: none;">
+          <div class="items-list">
+            <div class="shop-item-card">
+              <div><strong>❤️ Revive Heart</strong><div style="font-size:0.75rem; opacity:0.6;">Resume game when you fail</div></div>
+              <button class="btn" style="width:auto; padding:8px 14px;" onclick="app.buyItem('heart', 50)">50 🪙</button>
+            </div>
+            <div class="shop-item-card">
+              <div><strong>💡 Hint Clue</strong><div style="font-size:0.75rem; opacity:0.6;">Replay sequence in match</div></div>
+              <button class="btn" style="width:auto; padding:8px 14px;" onclick="app.buyItem('clue', 35)">35 🪙</button>
+            </div>
+            <div class="shop-item-card">
+              <div><strong>🛡️ Streak Shield</strong><div style="font-size:0.75rem; opacity:0.6;">Protects score on next mistake</div></div>
+              <button class="btn" style="width:auto; padding:8px 14px;" onclick="app.buyItem('shield', 60)">60 🪙</button>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-secondary" style="margin-top: auto;" onclick="app.showScreen('screen-home')">Back to Menu</button>
+      </div>
+    </section>
+
+    <!-- ==================== MODERN SCROLLABLE SETTINGS SCREEN ==================== -->
+    <section id="screen-settings" class="screen">
+      <div class="borderless-card" style="height: 100%; justify-content: flex-start;">
+        <h2 style="margin-bottom: 12px;">Settings</h2>
+
+        <div class="settings-container">
+          <!-- Section 1: Appearance -->
+          <div class="settings-section-title">Appearance & Themes</div>
+          <div class="setting-item-row" style="flex-direction: column; align-items: flex-start; gap: 10px;">
+            <div class="setting-title">Theme Palette</div>
+            <div class="segmented-control" style="width: 100%;">
+              <button id="theme-btn-dark" class="active" onclick="app.setTheme('theme-dark')">Dark</button>
+              <button id="theme-btn-light" onclick="app.setTheme('theme-light')">Light</button>
+              <button id="theme-btn-sunset" onclick="app.setTheme('theme-sunset')">Sunset</button>
+              <button id="theme-btn-pastel" onclick="app.setTheme('theme-pastel')">Pastel</button>
+            </div>
+          </div>
+
+          <!-- Section 2: Audio Settings -->
+          <div class="settings-section-title">Audio & Sound</div>
+          <div class="setting-item-row">
+            <div class="setting-info">
+              <span class="setting-title">Sound Effects (SFX)</span>
+              <span class="setting-desc">Enable dynamic pitch tap audio</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="setting-sfx-toggle" checked onchange="app.toggleSFX(this.checked)">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item-row">
+            <div class="setting-info">
+              <span class="setting-title">Custom Local SFX Engine</span>
+              <span class="setting-desc">Loads assets/sfx/ sound files</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="setting-local-sfx-toggle" onchange="app.toggleLocalAudio(this.checked)">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <!-- Section 3: General & Data -->
+          <div class="settings-section-title">Data & Controls</div>
+          <div class="setting-item-row">
+            <div class="setting-info">
+              <span class="setting-title">Haptic Vibration</span>
+              <span class="setting-desc">Vibrate device on node tap</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="setting-vibrate-toggle" checked onchange="app.toggleVibration(this.checked)">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item-row" style="margin-top: 10px;">
+            <button class="btn btn-danger" onclick="app.resetHighScores()">Reset High Scores</button>
+          </div>
+        </div>
+
+        <button class="btn btn-secondary" onclick="app.showScreen('screen-home')">Back to Menu</button>
+      </div>
+    </section>
+
+    <!-- ==================== GAMEPLAY SCREEN ==================== -->
+    <section id="screen-game" class="screen">
+      <div class="game-header">
+        <button class="btn btn-secondary" style="padding: 6px 14px; width: auto;" onclick="app.requestQuitGame()">← Leave</button>
+        <div class="stat-chip">❤️ <span id="game-hearts">0</span></div>
+        <div class="stat-chip">🪙 <span id="game-coins">0</span></div>
+        <div class="stat-chip">Score: <span id="game-score">0</span></div>
+      </div>
+
+      <div class="progress-container">
+        <div id="game-progress" class="progress-bar"></div>
+      </div>
+
+      <div class="grid-wrapper">
+        <canvas id="effect-canvas"></canvas>
+        <div id="game-grid" class="grid-container grid-3x3"></div>
+      </div>
+
+      <div id="game-status" class="game-status-text">Watch pattern...</div>
+
+      <!-- In-Game Powerup Action Row -->
+      <div class="in-game-powerups">
+        <button class="powerup-btn" onclick="app.useClueInGame()">💡 Use Hint (<span id="in-game-clue-count">0</span>)</button>
+      </div>
+    </section>
+
+    <!-- ==================== CONFIRM LEAVE GAME OVERLAY ==================== -->
+    <div id="overlay-leave" class="overlay">
+      <div class="modal-card">
+        <h3>Quit Game?</h3>
+        <p style="font-size:0.9rem; opacity:0.8; margin: 12px 0;">Are you sure you want to leave? Your high score will be saved.</p>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-danger" onclick="app.confirmQuitGame()">Leave Match</button>
+          <button class="btn btn-secondary" onclick="app.closeLeaveModal()">Resume</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== GAME OVER OVERLAY ==================== -->
+    <div id="overlay-gameover" class="overlay">
+      <div class="modal-card">
+        <h1 style="color: #ef4444;">Game Over</h1>
+        <p style="font-size:0.9rem; opacity:0.8;" id="gameover-reason">Time ran out!</p>
+        
+        <div style="margin: 14px 0;">
+          <div style="font-size: 0.8rem; opacity: 0.6;">FINAL SCORE</div>
+          <div id="gameover-score" style="font-size: 3rem; font-weight: 800;">0</div>
+        </div>
+
+        <!-- Revive Section -->
+        <div style="margin-bottom: 16px; padding: 12px; background: rgba(255,255,255,0.08); border-radius: 18px;">
+          <div style="font-size: 0.85rem; font-weight: 700; margin-bottom: 8px;">Revive and keep streak?</div>
+          <button id="btn-use-revive" class="btn" style="background: #ec4899; color: white;" onclick="app.useRevive()">Use 1 Heart ❤️ (<span id="revive-count-label">0</span> Left)</button>
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-secondary" onclick="app.restartGame()">Try Again</button>
+          <button class="btn btn-secondary" onclick="app.closeGameOverAndGoHome()">Main Menu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== HOW TO PLAY & MODE BENEFITS MODAL ==================== -->
+    <div id="overlay-help" class="overlay">
+      <div class="modal-card" style="max-height: 85dvh; overflow-y: auto;">
+        <h2>How to Play</h2>
+        <p style="font-size:0.88rem; margin: 10px 0; opacity: 0.85; text-align: left; line-height: 1.4;">
+          1. Memorize the glowing pattern sequence.<br>
+          2. Tap the grid tiles in exact order.<br>
+          3. Earn coins to unlock 50 colors, custom particle tap effects, and power-ups!
+        </p>
+
+        <h3 style="font-size: 0.95rem; margin-top: 14px; text-align: left;">🎮 Game Modes & Benefits</h3>
+        <div style="text-align: left; font-size: 0.8rem; opacity: 0.8; line-height: 1.5; margin-top: 6px;">
+          • <strong>Easy (3x3):</strong> Relaxed pace, ideal for beginner warm-ups.<br>
+          • <strong>Medium (4x4):</strong> Standard memory challenge mode.<br>
+          • <strong>Hard (5x5):</strong> Expert focus grid challenge.<br>
+          • <strong>⚡ Speed Mode:</strong> Fast pacing timer with <strong>2x Double Coin Rewards</strong>!
+        </div>
+
+        <h3 style="font-size: 0.95rem; margin-top: 14px; text-align: left;">Support the Creator</h3>
+        <div class="social-links">
+          <!-- Placeholder links - change href values later -->
+          <a href="#" target="_blank" class="social-btn" title="Facebook">📘</a>
+          <a href="#" target="_blank" class="social-btn" title="Instagram">📸</a>
+          <a href="#" target="_blank" class="social-btn" title="X (Twitter)">🐦</a>
+          <a href="#" target="_blank" class="social-btn" title="YouTube">▶️</a>
+        </div>
+
+        <button class="btn btn-secondary" style="margin-top: 18px;" onclick="app.closeHelpModal()">Close</button>
+      </div>
+    </div>
+
+    <!-- ==================== CONFIRM PURCHASE MODAL ==================== -->
+    <div id="overlay-confirm" class="overlay">
+      <div class="modal-card">
+        <h3>Confirm Purchase</h3>
+        <p id="confirm-msg-text" style="font-size: 0.95rem; margin: 16px 0; font-weight:600;"></p>
+        <div style="display: flex; gap: 10px;">
+          <button id="confirm-btn-yes" class="btn" style="background:#10b981; color:white;">Buy Now</button>
+          <button class="btn btn-secondary" onclick="app.closeConfirmModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    /* -------------------------------------------------------------
+       1. AUDIO ENGINE (SYNTH + ASSETS/SFX FOLDER AUDIO)
+       ------------------------------------------------------------- */
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.masterGain = null;
+        this.enabled = true;
+        this.useLocalFolder = false;
+        this.scale = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99, 880.00];
+
+        /* Local SFX Assets Mapping */
+        this.sfxPaths = {
+          tile1: 'assets/sfx/tile1.mp3',
+          tile2: 'assets/sfx/tile2.mp3',
+          tile3: 'assets/sfx/tile3.mp3',
+          tile4: 'assets/sfx/tile4.mp3',
+          tile5: 'assets/sfx/tile5.mp3',
+          buy: 'assets/sfx/buy.mp3',
+          win: 'assets/sfx/win.mp3',
+          fail: 'assets/sfx/fail.mp3'
+        };
+        this.audioCache = {};
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+          this.masterGain = this.ctx.createGain();
+          this.masterGain.gain.setValueAtTime(0.6, this.ctx.currentTime);
+          this.masterGain.connect(this.ctx.destination);
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playTileSound(index) {
+        if (!this.enabled) return;
+        this.init();
+
+        if (this.useLocalFolder) {
+          const tileKey = `tile${(index % 5) + 1}`;
+          this.playAudioFile(this.sfxPaths[tileKey]);
+          return;
+        }
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const freq = this.scale[index % this.scale.length];
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+
+        gain.gain.setValueAtTime(0, this.ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.5, this.ctx.currentTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.28);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.28);
+      }
+
+      playBuySound() {
+        if (!this.enabled) return;
+        this.init();
+        if (this.useLocalFolder) { this.playAudioFile(this.sfxPaths.buy); return; }
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880.00, this.ctx.currentTime + 0.15);
+
+        gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.18);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.18);
+      }
+
+      playFailSound() {
+        if (!this.enabled) return;
+        this.init();
+        if (this.useLocalFolder) { this.playAudioFile(this.sfxPaths.fail); return; }
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(60, this.ctx.currentTime + 0.35);
+
+        gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.35);
+      }
+
+      playAudioFile(path) {
+        if (!this.audioCache[path]) {
+          this.audioCache[path] = new Audio(path);
+        }
+        const audio = this.audioCache[path].cloneNode();
+        audio.play().catch(() => {});
+      }
+    }
+
+    /* -------------------------------------------------------------
+       2. CANVAS PARTICLE EFFECTS ENGINE
+       ------------------------------------------------------------- */
+    class EffectEngine {
+      constructor(canvasId) {
+        this.canvas = document.getElementById(canvasId);
+        this.ctx = this.canvas.getContext('2d');
+        this.particles = [];
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+        this.animate();
+      }
+
+      resize() {
+        if (!this.canvas.parentElement) return;
+        this.canvas.width = this.canvas.parentElement.clientWidth;
+        this.canvas.height = this.canvas.parentElement.clientHeight;
+      }
+
+      triggerEffect(type, x, y) {
+        this.resize();
+        if (type === 'flame') {
+          for (let i = 0; i < 18; i++) {
+            this.particles.push({
+              x, y,
+              vx: (Math.random() - 0.5) * 5,
+              vy: -Math.random() * 5 - 2,
+              size: Math.random() * 10 + 4,
+              color: `hsl(${Math.random() * 30 + 10}, 100%, 50%)`,
+              life: 1
+            });
+          }
+        } else if (type === 'sparkle') {
+          for (let i = 0; i < 22; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 6 + 2;
+            this.particles.push({
+              x, y,
+              vx: Math.cos(angle) * speed,
+              vy: Math.sin(angle) * speed,
+              size: Math.random() * 5 + 2,
+              color: '#ffffff',
+              life: 1
+            });
+          }
+        } else if (type === 'vortex') {
+          this.particles.push({
+            x, y, radius: 4, color: '#00e5ff', type: 'ring', life: 1
+          });
+        } else if (type === 'confetti') {
+          for (let i = 0; i < 25; i++) {
+            this.particles.push({
+              x, y,
+              vx: (Math.random() - 0.5) * 8,
+              vy: (Math.random() - 0.5) * 8,
+              size: Math.random() * 6 + 3,
+              color: `hsl(${Math.random() * 360}, 90%, 60%)`,
+              life: 1
+            });
+          }
+        }
+      }
+
+      animate() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          const p = this.particles[i];
+          if (p.type === 'ring') {
+            p.radius += 4;
+            p.life -= 0.04;
+            this.ctx.beginPath();
+            this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            this.ctx.strokeStyle = p.color;
+            this.ctx.lineWidth = 4;
+            this.ctx.globalAlpha = Math.max(0, p.life);
+            this.ctx.stroke();
+          } else {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life -= 0.03;
+            this.ctx.fillStyle = p.color;
+            this.ctx.globalAlpha = Math.max(0, p.life);
+            this.ctx.beginPath();
+            this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            this.ctx.fill();
+          }
+
+          if (p.life <= 0) this.particles.splice(i, 1);
+        }
+        this.ctx.globalAlpha = 1;
+        requestAnimationFrame(() => this.animate());
+      }
+    }
+
+    /* -------------------------------------------------------------
+       3. MAIN GAME APPLICATION & LOGIC
+       ------------------------------------------------------------- */
+    class GameApp {
+      constructor() {
+        this.difficultyConfigs = {
+          easy:   { size: 3, gridClass: 'grid-3x3', timePerNode: 2200, flashSpeed: 450, coinMultiplier: 1 },
+          medium: { size: 4, gridClass: 'grid-4x4', timePerNode: 1700, flashSpeed: 380, coinMultiplier: 1 },
+          hard:   { size: 5, gridClass: 'grid-5x5', timePerNode: 1300, flashSpeed: 300, coinMultiplier: 1.5 },
+          speed:  { size: 4, gridClass: 'grid-4x4', timePerNode: 1000, flashSpeed: 240, coinMultiplier: 2 }
+        };
+
+        this.currentDifficulty = 'easy';
+        this.currentTheme = 'theme-dark';
+        this.selectedTileColor = '#00e5ff';
+        this.selectedEffect = 'none';
+
+        this.coins = 0;
+        this.hearts = 1;
+        this.clues = 1;
+        this.vibrationEnabled = true;
+
+        this.unlockedColors = ['#00e5ff'];
+        this.unlockedEffects = ['none'];
+
+        this.sequence = [];
+        this.playerStep = 0;
+        this.score = 0;
+        this.canPlayerInput = false;
+
+        this.sound = new SoundEngine();
+        this.effects = new EffectEngine('effect-canvas');
+
+        this.generate50TileColors();
+        this.loadSavedData();
+        this.render50ColorGrid();
+        this.updateHomeUI();
+        this.updateShopUI();
+      }
+
+      generate50TileColors() {
+        this.tileColorPalette = [];
+        for (let i = 0; i < 50; i++) {
+          const hue = Math.floor((i * 360) / 50);
+          this.tileColorPalette.push({
+            id: i + 1,
+            name: `Color #${i + 1}`,
+            hex: `hsl(${hue}, 90%, 55%)`,
+            cost: i === 0 ? 0 : (i + 1) * 12
+          });
+        }
+      }
+
+      loadSavedData() {
+        const theme = localStorage.getItem('ms_theme');
+        if (theme) this.setTheme(theme, false);
+
+        const coins = localStorage.getItem('ms_coins');
+        if (coins) this.coins = parseInt(coins, 10);
+
+        const hearts = localStorage.getItem('ms_hearts');
+        if (hearts) this.hearts = parseInt(hearts, 10);
+
+        const clues = localStorage.getItem('ms_clues');
+        if (clues) this.clues = parseInt(clues, 10);
+
+        const activeColor = localStorage.getItem('ms_active_color');
+        if (activeColor) this.selectTileColor(activeColor, false);
+
+        const unlockedC = localStorage.getItem('ms_unlocked_colors');
+        if (unlockedC) {
+          try { this.unlockedColors = JSON.parse(unlockedC); } catch(e){}
+        }
+
+        const unlockedE = localStorage.getItem('ms_unlocked_effects');
+        if (unlockedE) {
+          try { this.unlockedEffects = JSON.parse(unlockedE); } catch(e){}
+        }
+
+        const activeE = localStorage.getItem('ms_active_effect');
+        if (activeE) this.selectedEffect = activeE;
+      }
+
+      getHighScore(diff) {
+        return parseInt(localStorage.getItem(`ms_highscore_${diff}`) || '0', 10);
+      }
+
+      setHighScore(diff, score) {
+        const current = this.getHighScore(diff);
+        if (score > current) {
+          localStorage.setItem(`ms_highscore_${diff}`, score.toString());
+        }
+      }
+
+      resetHighScores() {
+        ['easy', 'medium', 'hard', 'speed'].forEach(d => localStorage.removeItem(`ms_highscore_${d}`));
+        this.updateHomeUI();
+        alert('High scores reset successfully.');
+      }
+
+      showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        this.updateHomeUI();
+        this.updateShopUI();
+      }
+
+      setTheme(t, save = true) {
+        this.currentTheme = t;
+        document.body.className = t;
+        ['dark', 'light', 'sunset', 'pastel'].forEach(k => {
+          const btn = document.getElementById(`theme-btn-${k}`);
+          if (btn) btn.classList.toggle('active', t === `theme-${k}`);
+        });
+        if (save) localStorage.setItem('ms_theme', t);
+      }
+
+      toggleSFX(enabled) { this.sound.enabled = enabled; }
+      toggleLocalAudio(enabled) { this.sound.useLocalFolder = enabled; }
+      toggleVibration(enabled) { this.vibrationEnabled = enabled; }
+
+      vibrate(ms = 30) {
+        if (this.vibrationEnabled && navigator.vibrate) {
+          navigator.vibrate(ms);
+        }
+      }
+
+      updateHomeUI() {
+        document.getElementById('home-coins').textContent = this.coins;
+        document.getElementById('home-hearts').textContent = this.hearts;
+        document.getElementById('home-clues').textContent = this.clues;
+      }
+
+      /* Floating Coin Animation (+10 / -50) */
+      spawnCoinAnimation(amount, isPositive = true) {
+        const root = document.getElementById('app-root');
+        const pop = document.createElement('div');
+        pop.className = `coin-pop ${isPositive ? 'plus' : 'minus'}`;
+        pop.textContent = `${isPositive ? '+' : ''}${amount} 🪙`;
+
+        pop.style.left = '50%';
+        pop.style.top = '40%';
+        root.appendChild(pop);
+
+        setTimeout(() => pop.remove(), 1200);
+      }
+
+      openDifficultyModal() {
+        ['easy', 'medium', 'hard', 'speed'].forEach(d => {
+          document.getElementById(`diff-best-${d}`).textContent = this.getHighScore(d);
+        });
+        document.getElementById('overlay-difficulty').classList.add('active');
+      }
+
+      closeDifficultyModal() {
+        document.getElementById('overlay-difficulty').classList.remove('active');
+      }
+
+      startGameWithDiff(diff) {
+        this.currentDifficulty = diff;
+        this.closeDifficultyModal();
+        this.startGame();
+      }
+
+      /* Shop Logic */
+      switchShopTab(tab) {
+        ['colors', 'effects', 'items'].forEach(t => {
+          document.getElementById(`shop-tab-${t}`).style.display = t === tab ? 'block' : 'none';
+          document.getElementById(`tab-btn-${t}`).classList.toggle('active', t === tab);
+        });
+      }
+
+      render50ColorGrid() {
+        const container = document.getElementById('color-grid-container');
+        container.innerHTML = '';
+
+        this.tileColorPalette.forEach((item) => {
+          const swatch = document.createElement('div');
+          swatch.className = `color-swatch ${this.selectedTileColor === item.hex ? 'active' : ''}`;
+          swatch.style.background = item.hex;
+
+          const isUnlocked = this.unlockedColors.includes(item.hex);
+          if (isUnlocked) {
+            if (this.selectedTileColor === item.hex) swatch.innerHTML = '✓';
+          } else {
+            swatch.innerHTML = `🔒<span class="color-price-tag">${item.cost}🪙</span>`;
+          }
+
+          swatch.onclick = () => this.handleColorClick(item);
+          container.appendChild(swatch);
+        });
+      }
+
+      handleColorClick(item) {
+        if (this.unlockedColors.includes(item.hex)) {
+          this.selectTileColor(item.hex);
+        } else {
+          this.askConfirmation(`Buy ${item.name} for ${item.cost} coins?`, () => {
+            if (this.coins >= item.cost) {
+              this.coins -= item.cost;
+              this.unlockedColors.push(item.hex);
+              this.sound.playBuySound();
+              this.spawnCoinAnimation(-item.cost, false);
+              localStorage.setItem('ms_coins', this.coins.toString());
+              localStorage.setItem('ms_unlocked_colors', JSON.stringify(this.unlockedColors));
+              this.selectTileColor(item.hex);
+              this.updateShopUI();
+            } else {
+              alert('Not enough coins!');
+            }
+          });
+        }
+      }
+
+      selectTileColor(color, save = true) {
+        this.selectedTileColor = color;
+        document.documentElement.style.setProperty('--tile-color', color);
+        document.documentElement.style.setProperty('--tile-glow', color);
+        if (save) localStorage.setItem('ms_active_color', color);
+        this.render50ColorGrid();
+      }
+
+      handleEffectClick(eff, cost) {
+        if (this.unlockedEffects.includes(eff)) {
+          this.selectEffect(eff);
+        } else {
+          this.askConfirmation(`Buy effect for ${cost} coins?`, () => {
+            if (this.coins >= cost) {
+              this.coins -= cost;
+              this.unlockedEffects.push(eff);
+              this.selectedEffect = eff;
+              this.sound.playBuySound();
+              this.spawnCoinAnimation(-cost, false);
+              localStorage.setItem('ms_coins', this.coins.toString());
+              localStorage.setItem('ms_unlocked_effects', JSON.stringify(this.unlockedEffects));
+              localStorage.setItem('ms_active_effect', eff);
+              this.updateShopUI();
+            } else {
+              alert('Not enough coins!');
+            }
+          });
+        }
+      }
+
+      selectEffect(e) {
+        this.selectedEffect = e;
+        localStorage.setItem('ms_active_effect', e);
+        this.updateShopUI();
+      }
+
+      buyItem(type, cost) {
+        this.askConfirmation(`Buy 1 ${type} for ${cost} coins?`, () => {
+          if (this.coins >= cost) {
+            this.coins -= cost;
+            if (type === 'heart') this.hearts++;
+            if (type === 'clue') this.clues++;
+            this.sound.playBuySound();
+            this.spawnCoinAnimation(-cost, false);
+            localStorage.setItem('ms_coins', this.coins.toString());
+            localStorage.setItem('ms_hearts', this.hearts.toString());
+            localStorage.setItem('ms_clues', this.clues.toString());
+            this.updateShopUI();
+            this.updateHomeUI();
+          } else {
+            alert('Not enough coins!');
+          }
+        });
+      }
+
+      updateShopUI() {
+        document.getElementById('shop-coins').textContent = this.coins;
+        document.getElementById('shop-hearts').textContent = this.hearts;
+        document.getElementById('shop-clues').textContent = this.clues;
+
+        ['flame', 'sparkle', 'vortex', 'confetti'].forEach(eff => {
+          const btn = document.getElementById(`btn-effect-${eff}`);
+          if (!btn) return;
+          if (this.unlockedEffects.includes(eff)) {
+            btn.textContent = this.selectedEffect === eff ? 'Equipped' : 'Use';
+            btn.className = this.selectedEffect === eff ? 'btn btn-secondary' : 'btn';
+          }
+        });
+
+        const noneBtn = document.getElementById('btn-effect-none');
+        if (noneBtn) noneBtn.textContent = this.selectedEffect === 'none' ? 'Equipped' : 'Use';
+      }
+
+      askConfirmation(msg, onConfirm) {
+        document.getElementById('confirm-msg-text').textContent = msg;
+        const yesBtn = document.getElementById('confirm-btn-yes');
+        yesBtn.onclick = () => {
+          this.closeConfirmModal();
+          onConfirm();
+        };
+        document.getElementById('overlay-confirm').classList.add('active');
+      }
+
+      closeConfirmModal() { document.getElementById('overlay-confirm').classList.remove('active'); }
+      openHelpModal() { document.getElementById('overlay-help').classList.add('active'); }
+      closeHelpModal() { document.getElementById('overlay-help').classList.remove('active'); }
+
+      /* Game Logic */
+      startGame() {
+        this.sound.init();
+        this.showScreen('screen-game');
+        
+        this.score = 0;
+        this.sequence = [];
+        this.updateGameStats();
+        this.buildGrid();
+
+        setTimeout(() => this.nextRound(), 500);
+      }
+
+      requestQuitGame() {
+        document.getElementById('overlay-leave').classList.add('active');
+      }
+
+      closeLeaveModal() {
+        document.getElementById('overlay-leave').classList.remove('active');
+      }
+
+      confirmQuitGame() {
+        this.setHighScore(this.currentDifficulty, this.score);
+        this.closeLeaveModal();
+        this.clearTimer();
+        this.showScreen('screen-home');
+      }
+
+      buildGrid() {
+        const gridEl = document.getElementById('game-grid');
+        gridEl.innerHTML = '';
+
+        const config = this.difficultyConfigs[this.currentDifficulty];
+        gridEl.className = `grid-container ${config.gridClass}`;
+
+        const totalNodes = config.size * config.size;
+        for (let i = 0; i < totalNodes; i++) {
+          const node = document.createElement('div');
+          node.className = 'node';
+
+          node.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            const rect = node.getBoundingClientRect();
+            const parentRect = document.querySelector('.grid-wrapper').getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2 - parentRect.left;
+            const centerY = rect.top + rect.height / 2 - parentRect.top;
+
+            this.effects.triggerEffect(this.selectedEffect, centerX, centerY);
+            this.handleNodeTap(i);
+          });
+
+          gridEl.appendChild(node);
+        }
+      }
+
+      nextRound() {
+        this.canPlayerInput = false;
+        this.playerStep = 0;
+        this.setStatusText('Watch pattern...');
+
+        const config = this.difficultyConfigs[this.currentDifficulty];
+        const totalNodes = config.size * config.size;
+        this.sequence.push(Math.floor(Math.random() * totalNodes));
+
+        this.playSequence();
+      }
+
+      async playSequence() {
+        const config = this.difficultyConfigs[this.currentDifficulty];
+        await this.sleep(400);
+
+        for (let i = 0; i < this.sequence.length; i++) {
+          const index = this.sequence[i];
+          this.activateNode(index);
+          this.sound.playTileSound(index);
+          await this.sleep(config.flashSpeed + 110);
+        }
+
+        this.startPlayerTurn();
+      }
+
+      activateNode(index) {
+        const nodes = document.querySelectorAll('.node');
+        if (nodes[index]) {
+          nodes[index].classList.add('active');
+          setTimeout(() => nodes[index].classList.remove('active'), 300);
+        }
+      }
+
+      startPlayerTurn() {
+        this.canPlayerInput = true;
+        this.setStatusText('Your turn!');
+        const config = this.difficultyConfigs[this.currentDifficulty];
+        this.timerDuration = Math.max(2600, this.sequence.length * config.timePerNode);
+        this.startTimer();
+      }
+
+      handleNodeTap(index) {
+        if (!this.canPlayerInput) return;
+
+        this.vibrate(25);
+        this.sound.playTileSound(index);
+        this.activateNode(index);
+
+        if (index === this.sequence[this.playerStep]) {
+          this.playerStep++;
+
+          if (this.playerStep === this.sequence.length) {
+            this.clearTimer();
+            this.canPlayerInput = false;
+            this.score++;
+
+            const config = this.difficultyConfigs[this.currentDifficulty];
+            const earned = Math.floor(10 * config.coinMultiplier);
+            this.coins += earned;
+            this.spawnCoinAnimation(earned, true);
+            localStorage.setItem('ms_coins', this.coins.toString());
+
+            this.setHighScore(this.currentDifficulty, this.score);
+            this.updateGameStats();
+            this.setStatusText('Correct!');
+
+            setTimeout(() => this.nextRound(), 800);
+          }
+        } else {
+          this.triggerRedLossAnimation('Wrong tile pressed!');
+        }
+      }
+
+      useClueInGame() {
+        if (!this.canPlayerInput) return;
+        if (this.clues > 0) {
+          this.clues--;
+          localStorage.setItem('ms_clues', this.clues.toString());
+          this.updateGameStats();
+          this.canPlayerInput = false;
+          this.clearTimer();
+          this.playSequence();
+        } else {
+          alert('No Hints left! Buy them in the shop.');
+        }
+      }
+
+      triggerRedLossAnimation(reason) {
+        this.canPlayerInput = false;
+        this.clearTimer();
+        this.sound.playFailSound();
+        this.vibrate(150);
+
+        const nodes = document.querySelectorAll('.node');
+        nodes.forEach(n => n.classList.add('fail-red'));
+
+        setTimeout(() => {
+          nodes.forEach(n => n.classList.remove('fail-red'));
+          this.showGameOverOverlay(reason);
+        }, 800);
+      }
+
+      showGameOverOverlay(reason) {
+        this.setHighScore(this.currentDifficulty, this.score);
+
+        document.getElementById('gameover-reason').textContent = reason;
+        document.getElementById('gameover-score').textContent = this.score;
+        document.getElementById('revive-count-label').textContent = this.hearts;
+
+        document.getElementById('overlay-gameover').classList.add('active');
+      }
+
+      useRevive() {
+        if (this.hearts > 0) {
+          this.hearts--;
+          localStorage.setItem('ms_hearts', this.hearts.toString());
+          this.updateGameStats();
+          document.getElementById('overlay-gameover').classList.remove('active');
+          
+          this.setStatusText('Resumed!');
+          setTimeout(() => this.playSequence(), 500);
+        } else {
+          alert('No Revive Hearts left! Buy them in the Shop.');
+        }
+      }
+
+      startTimer() {
+        this.clearTimer();
+        this.timerStartTime = Date.now();
+        const progressBar = document.getElementById('game-progress');
+
+        const updateFrame = () => {
+          const elapsed = Date.now() - this.timerStartTime;
+          const remaining = Math.max(0, this.timerDuration - elapsed);
+          progressBar.style.transform = `scaleX(${remaining / this.timerDuration})`;
+
+          if (remaining > 0) {
+            this.timerId = requestAnimationFrame(updateFrame);
+          } else {
+            this.triggerRedLossAnimation('Time ran out!');
+          }
+        };
+
+        this.timerId = requestAnimationFrame(updateFrame);
+      }
+
+      clearTimer() {
+        if (this.timerId) {
+          cancelAnimationFrame(this.timerId);
+          this.timerId = null;
+        }
+        document.getElementById('game-progress').style.transform = 'scaleX(1)';
+      }
+
+      restartGame() {
+        document.getElementById('overlay-gameover').classList.remove('active');
+        this.startGame();
+      }
+
+      closeGameOverAndGoHome() {
+        document.getElementById('overlay-gameover').classList.remove('active');
+        this.showScreen('screen-home');
+      }
+
+      updateGameStats() {
+        document.getElementById('game-score').textContent = this.score;
+        document.getElementById('game-coins').textContent = this.coins;
+        document.getElementById('game-hearts').textContent = this.hearts;
+        document.getElementById('in-game-clue-count').textContent = this.clues;
+      }
+
+      setStatusText(msg) {
+        document.getElementById('game-status').textContent = msg;
+      }
+
+      sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+      }
+    }
+
+    let app;
+    document.addEventListener('DOMContentLoaded', () => {
+      app = new GameApp();
+    });
+  </script>
+</body>
+</html>
